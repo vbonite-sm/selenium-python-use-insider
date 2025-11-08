@@ -1,0 +1,30 @@
+{
+  "HomePage": {
+    "accept_cookies_btn": ["css selector", "#wt-cli-accept-all-btn"],
+    "company_menu": ["xpath", "//a[contains(text(),'Company')]"],
+    "careers_link": ["xpath", "//a[contains(text(),'Careers')]"],
+    "page_title": ["css selector", "h1"]
+  },
+  "CareersPage": {
+    "locations_block": ["css selector", "#career-our-location"],
+    "teams_block": ["css selector", ".career-load-more"],
+    "life_at_insider_block": ["css selector", ".elementor-section.landing-page-section"],
+    "page_heading": ["css selector", ".category-title-media h1"]
+  },
+  "QACareersPage": {
+    "see_all_jobs_btn": ["xpath", "//a[contains(text(),'See all QA jobs')]"],
+    "location_filter": ["css selector", "#select2-filter-by-location-container"],
+    "location_option": ["xpath", "//li[contains(text(),'{location}')]"],
+    "department_filter": ["css selector", "#select2-filter-by-department-container"],
+    "department_option": ["xpath", "//li[contains(text(),'{department}')]"],
+    "job_list": ["css selector", ".position-list-item"],
+    "job_position": ["css selector", ".position-title"],
+    "job_department": ["css selector", ".position-department"],
+    "job_location": ["css selector", ".position-location"],
+    "view_role_btn": ["css selector", ".btn.btn-navy"]
+  },
+  "LeverPage": {
+    "application_form": ["css selector", ".posting-headline"],
+    "job_title": ["css selector", ".posting-headline h2"]
+  }
+}
