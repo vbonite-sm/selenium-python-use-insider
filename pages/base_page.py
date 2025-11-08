@@ -97,6 +97,13 @@ class BasePage(ABC):
             EC.url_contains(url_part)
         )
     
+    @log_action
+    def switch_to_new_window(self):
+        """Switch to newly opened window/tab"""
+        self.wait.until(lambda d: len(d.window_handles) > 1)
+        windows = self.driver.window_handles
+        self.driver.switch_to.window(windows[-1])
+    
     def get_current_url(self) -> str:
         """Get current page URL"""
         return self.driver.current_url
