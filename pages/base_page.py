@@ -1,5 +1,6 @@
 """Base page class with common page object functionality"""
 from abc import ABC, abstractmethod
+import time
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
@@ -103,6 +104,32 @@ class BasePage(ABC):
         self.wait.until(lambda d: len(d.window_handles) > 1)
         windows = self.driver.window_handles
         self.driver.switch_to.window(windows[-1])
+    
+    @log_action
+    def wait_for_element_and_click(self, locator: Tuple, timeout: int = None):
+        """Wait for element to be clickable and click it - useful for AJAX loaded elements"""
+        wait_time = timeout or Config.DEFAULT_TIMEOUT
+        element = WebDriverWait(self.driver, wait_time).until(
+            EC.element_to_be_clickable(locator)
+        )
+        element.click()
+        return element
+    
+    @log_action
+    def dismiss_cookie_banner_if_present(self):
+        """Dismiss cookie consent banner if it appears"""
+
+        try:
+            cookie_banner = self.get_locator("cookie_banner")
+            if self.is_element_present(cookie_banner):
+                accept_btn = self.get_locator("cookie_accept_btn")
+                if self.is_element_visible(accept_btn, timeout=2):
+                    self.click(accept_btn)
+                    time.sleep(1)
+        except Exception as e:
+            # Silently continue if cookie banner handling fails
+            logger.debug(f"Cookie banner handling: {e}")
+            pass
     
     def get_current_url(self) -> str:
         """Get current page URL"""

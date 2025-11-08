@@ -18,8 +18,8 @@ class Config:
     HEADLESS = os.getenv("HEADLESS", "false").lower() == "true"
     
     # Timeouts
-    DEFAULT_TIMEOUT = 10
-    PAGE_LOAD_TIMEOUT = 30
+    DEFAULT_TIMEOUT = 30
+    PAGE_LOAD_TIMEOUT = 60
     
     # Screenshot settings
     SCREENSHOT_ON_FAILURE = True

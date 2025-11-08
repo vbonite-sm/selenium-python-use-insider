@@ -1,9 +1,13 @@
 """QA Careers page with job filtering functionality"""
 import allure
+import logging
+from selenium.webdriver.common.by import By
 from pages.base_page import LoadableComponent
 from utils.decorators import allure_step, screenshot_on_failure
 from config.config import Config
 from typing import List, Dict
+
+logger = logging.getLogger(__name__)
 
 
 class QACareersPage(LoadableComponent):
@@ -34,46 +38,161 @@ class QACareersPage(LoadableComponent):
     @allure_step("Click 'See all QA jobs' button")
     @screenshot_on_failure
     def click_see_all_jobs(self):
-        """Click on 'See all QA jobs' button"""
+        """Click on 'See all QA jobs' button and wait for job listings to load"""
         see_all_jobs_locator = self.get_locator("see_all_jobs_btn")
         self.scroll_to_element(see_all_jobs_locator)
         self.click(see_all_jobs_locator)
         
-        # Wait for job list to load
+        # Wait for transition/page load
+        import time
+        time.sleep(1)  # Brief wait for transition
+        
+        # Verify job list loaded
         job_list_locator = self.get_locator("job_list")
-        self.is_element_visible(job_list_locator, timeout=10)
+        assert self.is_element_visible(job_list_locator, timeout=60), \
+            "Job listings did not load after clicking 'See all QA jobs'"
+            
+        # Dismiss cookie banner if present
+        self.dismiss_cookie_banner_if_present()
+        
+        # Attach screenshot to confirm jobs loaded
+        allure.attach(
+            self.driver.get_screenshot_as_png(),
+            name="job_listings_loaded",
+            attachment_type=allure.attachment_type.PNG
+        )
     
     @allure_step("Filter jobs by location: {location}")
     @screenshot_on_failure
     def filter_by_location(self, location: str):
-        """Filter jobs by location"""
-        # Click location dropdown
-        location_filter_locator = self.get_locator("location_filter")
-        self.click(location_filter_locator)
-        
-        # Select location option
-        location_option_locator = self.get_locator("location_option", location=location)
-        self.click(location_option_locator)
-        
-        # Wait for results to update
+        """Filter jobs by location using Select2 dropdown with polling"""
         import time
-        time.sleep(2)  # Allow filter to apply
+        
+        # Poll for dropdown options to load (AJAX can take a long time)
+        max_wait = 300  # 5 minutes total
+        poll_interval = 30  # Check every 30 seconds
+        elapsed = 0
+        
+        location_filter_locator = self.get_locator("location_filter")
+        options_locator = self.get_locator("location_dropdown_options")
+        specific_option_locator = self.get_locator("location_option", location=location)
+        
+        # Scroll to filter element
+        self.scroll_to_element(location_filter_locator)
+        
+        while elapsed < max_wait:
+            try:
+                # Click to open dropdown
+                self.click(location_filter_locator)
+                time.sleep(2)  # Brief wait for dropdown to open
+                
+                # Check if dropdown options are loaded
+                if self.is_element_visible(options_locator, timeout=5):
+                    # Options are loaded, try to click the specific one
+                    try:
+                        self.scroll_to_element(specific_option_locator)
+                        self.wait_for_element_and_click(specific_option_locator, timeout=5)
+                        logger.info(f"Successfully clicked location: {location}")
+                        break
+                    except Exception as click_error:
+                        logger.warning(f"Options loaded but couldn't click '{location}' yet: {click_error}")
+                        # Close dropdown and continue polling
+                        self.click(location_filter_locator)
+                        time.sleep(1)
+                else:
+                    # No options loaded yet, close dropdown
+                    logger.info(f"No options loaded yet after {elapsed}s, closing dropdown and waiting...")
+                    self.click(location_filter_locator)
+                    time.sleep(1)
+                
+                # Wait before next poll
+                if elapsed + poll_interval < max_wait:
+                    logger.info(f"Waiting {poll_interval}s before next attempt...")
+                    time.sleep(poll_interval)
+                    elapsed += poll_interval
+                else:
+                    raise Exception(f"Dropdown options did not load after {max_wait}s")
+                    
+            except Exception as e:
+                if elapsed + poll_interval >= max_wait:
+                    logger.error(f"Failed to select location after {max_wait}s: {e}")
+                    raise
+                # Close dropdown if open
+                try:
+                    self.click(location_filter_locator)
+                except:
+                    pass
+                time.sleep(poll_interval)
+                elapsed += poll_interval
+        
+        # Wait for filter to apply
+        time.sleep(2)
     
     @allure_step("Filter jobs by department: {department}")
     @screenshot_on_failure
     def filter_by_department(self, department: str):
-        """Filter jobs by department"""
-        # Click department dropdown
-        department_filter_locator = self.get_locator("department_filter")
-        self.click(department_filter_locator)
-        
-        # Select department option
-        department_option_locator = self.get_locator("department_option", department=department)
-        self.click(department_option_locator)
-        
-        # Wait for results to update
+        """Filter jobs by department using Select2 dropdown with polling"""
         import time
-        time.sleep(2)  # Allow filter to apply
+        
+        # Poll for dropdown options to load (AJAX can take a long time)
+        max_wait = 300  # 5 minutes total
+        poll_interval = 30  # Check every 30 seconds
+        elapsed = 0
+        
+        department_filter_locator = self.get_locator("department_filter")
+        options_locator = self.get_locator("department_dropdown_options")
+        specific_option_locator = self.get_locator("department_option", department=department)
+        
+        # Scroll to filter element
+        self.scroll_to_element(department_filter_locator)
+        
+        while elapsed < max_wait:
+            try:
+                # Click to open dropdown
+                self.click(department_filter_locator)
+                time.sleep(2)  # Brief wait for dropdown to open
+                
+                # Check if dropdown options are loaded
+                if self.is_element_visible(options_locator, timeout=5):
+                    # Options are loaded, try to click the specific one
+                    try:
+                        self.scroll_to_element(specific_option_locator)
+                        self.wait_for_element_and_click(specific_option_locator, timeout=5)
+                        logger.info(f"Successfully clicked department: {department}")
+                        break
+                    except Exception as click_error:
+                        logger.warning(f"Options loaded but couldn't click '{department}' yet: {click_error}")
+                        # Close dropdown and continue polling
+                        self.click(department_filter_locator)
+                        time.sleep(1)
+                else:
+                    # No options loaded yet, close dropdown
+                    logger.info(f"No options loaded yet after {elapsed}s, closing dropdown and waiting...")
+                    self.click(department_filter_locator)
+                    time.sleep(1)
+                
+                # Wait before next poll
+                if elapsed + poll_interval < max_wait:
+                    logger.info(f"Waiting {poll_interval}s before next attempt...")
+                    time.sleep(poll_interval)
+                    elapsed += poll_interval
+                else:
+                    raise Exception(f"Dropdown options did not load after {max_wait}s")
+                    
+            except Exception as e:
+                if elapsed + poll_interval >= max_wait:
+                    logger.error(f"Failed to select department after {max_wait}s: {e}")
+                    raise
+                # Close dropdown if open
+                try:
+                    self.click(department_filter_locator)
+                except:
+                    pass
+                time.sleep(poll_interval)
+                elapsed += poll_interval
+        
+        # Wait for filter to apply
+        time.sleep(2)
     
     @allure_step("Get all job listings")
     def get_job_listings(self) -> List[Dict[str, str]]:
