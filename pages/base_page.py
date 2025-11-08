@@ -89,6 +89,14 @@ class BasePage(ABC):
         element = self.find_element(locator)
         self.driver.execute_script("arguments[0].scrollIntoView(true);", element)
     
+    @log_action
+    def wait_for_url_contains(self, url_part: str, timeout: int = None):
+        """Wait for URL to contain specific text"""
+        wait_time = timeout or Config.DEFAULT_TIMEOUT
+        WebDriverWait(self.driver, wait_time).until(
+            EC.url_contains(url_part)
+        )
+    
     def get_current_url(self) -> str:
         """Get current page URL"""
         return self.driver.current_url
