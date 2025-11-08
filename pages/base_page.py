@@ -92,3 +92,23 @@ class BasePage(ABC):
     def get_current_url(self) -> str:
         """Get current page URL"""
         return self.driver.current_url
+
+
+class LoadableComponent(BasePage):
+    """Loadable Component pattern - ensures page is loaded before use"""
+    
+    @abstractmethod
+    def load(self):
+        """Navigate to the page"""
+        pass
+    
+    @abstractmethod
+    def is_loaded(self):
+        """Verify the page is loaded"""
+        pass
+    
+    def get(self):
+        """Load and verify the page"""
+        self.load()
+        self.is_loaded()
+        return self
