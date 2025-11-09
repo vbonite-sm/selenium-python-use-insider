@@ -1,12 +1,37 @@
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
+*.so
+.Python
+
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# Pytest
 .pytest_cache/
+.coverage
+htmlcov/
+
+# Test outputs
 screenshots/
 reports/
-*.log
-.env
-venv/
-.idea/
-*.iml
+test_execution.log
+*.xml
+*.md
+
+# IDEs
 .vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Allure
+allure-report/
+allure-results/
