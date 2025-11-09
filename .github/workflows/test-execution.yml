@@ -26,7 +26,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
+      - name: Start virtual display (1920x1080)
+        run: |
+          sudo Xvfb :99 -screen 0 1920x1080x24 >/dev/null 2>&1 &
+          echo "DISPLAY=:99" >> $GITHUB_ENV
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -47,7 +52,7 @@ jobs:
         run: |
           pytest tests/test_insider_careers.py \
             --browser=chrome \
-            --headless=true \
+            --headless=false \
             --alluredir=reports/allure-results \
             --junitxml=reports/junit-chrome.xml \
             --md-report \
@@ -120,6 +125,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Start virtual display (1920x1080)
+        run: |
+          sudo Xvfb :99 -screen 0 1920x1080x24 >/dev/null 2>&1 &
+          echo "DISPLAY=:99" >> $GITHUB_ENV
       
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -141,7 +151,7 @@ jobs:
         run: |
           pytest tests/test_insider_careers.py \
             --browser=firefox \
-            --headless=true \
+            --headless=false \
             --alluredir=reports/allure-results \
             --junitxml=reports/junit-firefox.xml \
             --md-report \
