@@ -95,7 +95,7 @@ selenium-python-use-insider/
 
 Tests run automatically on push to `main`. Manual trigger available in GitHub Actions.
 
-Reports deployed to: `https://vbonite-sm.github.io/selenium-python-use-insider/`
+Reports deployed to: `https://vbonite-sm.github.io/selenium-python-use-insider/` (to be fixed)
 
 ## Configuration
 
@@ -134,7 +134,3 @@ make clean
 scoop install allure  # Windows
 brew install allure   # Mac
 ```
-
-## License
-
-This project is for assessment purposes.
