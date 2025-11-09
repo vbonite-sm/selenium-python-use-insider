@@ -67,8 +67,10 @@ def driver(request):
     else:
         raise ValueError(f"Unsupported browser: {browser_name}")
     
-    # Configure driver
-    driver.maximize_window()
+    # Set window size (works in all environments)
+    driver.set_window_size(1920, 1080)
+    
+    # Set page load timeout
     driver.set_page_load_timeout(Config.PAGE_LOAD_TIMEOUT)
     
     # Attach browser info to Allure report
