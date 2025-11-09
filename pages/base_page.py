@@ -9,6 +9,8 @@ import logging
 from config.config import Config
 from utils.decorators import log_action, screenshot_on_failure
 from locators.locator_repository import locator_repo
+from selenium.webdriver import ActionChains
+from selenium.webdriver.remote.webelement import WebElement
 
 logger = logging.getLogger(__name__)
 
@@ -83,6 +85,18 @@ class BasePage(ABC):
             return True
         except TimeoutException:
             return False
+        
+    @log_action
+    def is_element_present(self, locator: Tuple, timeout: int = None) -> bool:
+        """Check if element is present in DOM"""
+        wait_time = timeout or Config.DEFAULT_TIMEOUT
+        try:
+            WebDriverWait(self.driver, wait_time).until(
+                EC.presence_of_element_located(locator)
+            )
+            return True
+        except TimeoutException:
+            return False    
     
     @log_action
     def scroll_to_element(self, locator: Tuple):
@@ -120,16 +134,28 @@ class BasePage(ABC):
         """Dismiss cookie consent banner if it appears"""
 
         try:
-            cookie_banner = self.get_locator("cookie_banner")
+            cookie_banner = self.get_locator("cookie_banner_container")
             if self.is_element_present(cookie_banner):
                 accept_btn = self.get_locator("cookie_accept_btn")
-                if self.is_element_visible(accept_btn, timeout=2):
+                if self.is_element_visible(accept_btn, timeout=5):
                     self.click(accept_btn)
                     time.sleep(1)
         except Exception as e:
             # Silently continue if cookie banner handling fails
             logger.debug(f"Cookie banner handling: {e}")
             pass
+        
+    @log_action
+    def hover_over_element(self, locator):
+        """Hover over an element"""
+        
+        if isinstance(locator, WebElement):
+            element = locator
+        else:
+            element = self.find_element(locator)
+        
+        actions = ActionChains(self.driver)
+        actions.move_to_element(element).perform()
     
     def get_current_url(self) -> str:
         """Get current page URL"""

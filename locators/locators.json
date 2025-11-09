@@ -20,12 +20,15 @@
     "department_dropdown_options": ["xpath", "//ul[@class='select2-results__options']//li"],
     "department_option": ["xpath", "//ul[@class='select2-results__options']//li[contains(text(),'{department}')]"],
     "job_list": ["css selector", ".position-list-item"],
+    "job_card_by_attributes": ["xpath", "//div[contains(@class, 'position-list-item') and @data-location='{data_location}' and @data-team='{data_team}']"],
     "job_position": ["css selector", ".position-title"],
     "job_department": ["css selector", ".position-department"],
     "job_location": ["css selector", ".position-location"],
-    "view_role_btn": ["css selector", ".btn.btn-navy"],
-    "cookie_banner": ["id", "cookie-law-info-bar"],
-    "cookie_accept_btn": ["css selector", "#wt-cli-accept-all-btn"]
+    "view_role_btn": ["xpath", "//a[contains(text(),'View Role')]"],
+    "cookie_banner": ["css selector", "#cookie-law-info-bar"],
+    "cookie_accept_all_btn": ["css selector", "#wt-cli-accept-all-btn"],
+    "cookie_accept_btn": ["css selector", "#wt-cli-accept-btn"],
+    "cookie_banner_container": ["css selector", ".wt-cli-cookie-bar-container"]
   },
   "LeverPage": {
     "application_form": ["css selector", ".posting-headline"],
