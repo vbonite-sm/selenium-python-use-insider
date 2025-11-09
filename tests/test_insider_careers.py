@@ -57,7 +57,7 @@ class TestInsiderCareers:
     def test_03_filter_qa_jobs(self, driver):
         """
         Test Step 3: Go to QA careers page, click "See all QA jobs",
-        filter by Istanbul/Turkey and Quality Assurance department
+        filter by Istanbul/Turkiye and Quality Assurance department
         """
         # Arrange
         qa_page = QACareersPage(driver)
@@ -125,8 +125,8 @@ class TestInsiderCareers:
         qa_page.filter_by_department("Quality Assurance")
         
         # Act
-        qa_page.click_view_role()
-        
+        qa_page.click_view_role_of_specific_job("istanbul-turkiye", "qualityassurance")
+
         # Assert
         lever_page = LeverPage(driver)
         lever_page.is_loaded()
@@ -187,13 +187,13 @@ class TestInsiderCareers:
                 f"Job {idx} position validation failed"
             assert "quality assurance" in job['department'].lower(), \
                 f"Job {idx} department validation failed"
-            assert "istanbul" in job['location'].lower() and "turkey" in job['location'].lower(), \
+            assert "istanbul" in job['location'].lower() and "turkiye" in job['location'].lower(), \
                 f"Job {idx} location validation failed"
         
         
         # ===== STEP 5: Lever Redirect =====
         # Act
-        qa_page.click_view_role()
+        qa_page.click_view_role_of_specific_job("istanbul-turkiye", "qualityassurance")
         
         # Assert
         lever_page = LeverPage(driver)

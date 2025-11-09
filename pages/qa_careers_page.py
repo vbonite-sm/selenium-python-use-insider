@@ -82,6 +82,9 @@ class QACareersPage(LoadableComponent):
         
         while elapsed < max_wait:
             try:
+                # Dismiss cookie banner if present
+                self.dismiss_cookie_banner_if_present()
+                
                 # Click to open dropdown
                 self.click(location_filter_locator)
                 time.sleep(2)  # Brief wait for dropdown to open
@@ -148,6 +151,10 @@ class QACareersPage(LoadableComponent):
         
         while elapsed < max_wait:
             try:
+                
+                # Dismiss cookie banner if present
+                self.dismiss_cookie_banner_if_present()
+                
                 # Click to open dropdown
                 self.click(department_filter_locator)
                 time.sleep(2)  # Brief wait for dropdown to open
@@ -250,5 +257,27 @@ class QACareersPage(LoadableComponent):
         self.scroll_to_element(view_role_locator)
         self.click(view_role_locator)
         
+        # Switch to new tab/window
+        self.switch_to_new_window()
+        
+    @allure_step("Click 'View Role' button of specified job")
+    @screenshot_on_failure
+    def click_view_role_of_specific_job(self, data_location: str, data_team: str):
+        """Click View Role button of specified job"""
+        job_card_locator = self.get_locator("job_card_by_attributes", data_location=data_location, data_team=data_team)
+
+        # Find job cards matching the criteria
+        job_cards = self.find_elements(job_card_locator)
+        assert len(job_cards) > 0, f"No job found with location '{data_location}' and department '{data_team}'"
+
+        first_job_card = job_cards[0]
+        
+        # Hover over the job card to reveal the View Role button
+        self.hover_over_element(first_job_card)
+        
+        # Click the View Role button within that job card
+        view_role_locator = self.get_locator("view_role_btn")
+        self.click(view_role_locator)
+
         # Switch to new tab/window
         self.switch_to_new_window()
