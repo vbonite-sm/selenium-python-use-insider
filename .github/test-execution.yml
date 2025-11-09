@@ -1,0 +1,250 @@
+name: Insider QA Test Automation
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      browser:
+        description: 'Browser to run tests'
+        required: true
+        default: 'chrome'
+        type: choice
+        options:
+          - chrome
+          - firefox
+          - both
+
+jobs:
+  test-chrome:
+    name: Run Tests on Chrome
+    runs-on: ubuntu-latest
+    if: github.event.inputs.browser == 'chrome' || github.event.inputs.browser == 'both' || github.event.inputs.browser == ''
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Create directories
+        run: |
+          mkdir -p screenshots
+          mkdir -p reports/allure-results
+      
+      - name: Run tests on Chrome
+        run: |
+          pytest tests/test_insider_careers.py \
+            --browser=chrome \
+            --headless=true \
+            --alluredir=reports/allure-results \
+            --junitxml=reports/junit-chrome.xml \
+            --md-report \
+            --md-report-flavor=gfm \
+            --md-report-output=reports/test-summary-chrome.md \
+            --emoji \
+            -v -s
+        continue-on-error: true
+      
+      - name: Publish Test Summary to GitHub Actions
+        if: always()
+        run: |
+          echo "# Chrome Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          cat reports/test-summary-chrome.md >> $GITHUB_STEP_SUMMARY
+      
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          files: reports/junit-chrome.xml
+          check_name: Chrome Test Results
+          comment_title: Chrome Test Results
+      
+      - name: Upload screenshots on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots-chrome
+          path: screenshots/
+          retention-days: 7
+      
+      - name: Upload test summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-summary-chrome
+          path: reports/test-summary-chrome.md
+          retention-days: 7
+      
+      - name: Upload Allure results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results-chrome
+          path: reports/allure-results/
+          retention-days: 7
+      
+      - name: Upload JUnit XML
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-chrome
+          path: reports/junit-chrome.xml
+          retention-days: 7
+      
+      - name: Upload test logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-logs-chrome
+          path: test_execution.log
+          retention-days: 7
+
+  test-firefox:
+    name: Run Tests on Firefox
+    runs-on: ubuntu-latest
+    if: github.event.inputs.browser == 'firefox' || github.event.inputs.browser == 'both'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Create directories
+        run: |
+          mkdir -p screenshots
+          mkdir -p reports/allure-results
+      
+      - name: Run tests on Firefox
+        run: |
+          pytest tests/test_insider_careers.py \
+            --browser=firefox \
+            --headless=true \
+            --alluredir=reports/allure-results \
+            --junitxml=reports/junit-firefox.xml \
+            --md-report \
+            --md-report-flavor=gfm \
+            --md-report-output=reports/test-summary-firefox.md \
+            --emoji \
+            -v -s
+        continue-on-error: true
+      
+      - name: Publish Test Summary to GitHub Actions
+        if: always()
+        run: |
+          echo "# Firefox Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          cat reports/test-summary-firefox.md >> $GITHUB_STEP_SUMMARY
+      
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          files: reports/junit-firefox.xml
+          check_name: Firefox Test Results
+          comment_title: Firefox Test Results
+      
+      - name: Upload screenshots on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots-firefox
+          path: screenshots/
+          retention-days: 7
+      
+      - name: Upload test summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-summary-firefox
+          path: reports/test-summary-firefox.md
+          retention-days: 7
+      
+      - name: Upload Allure results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results-firefox
+          path: reports/allure-results/
+          retention-days: 7
+      
+      - name: Upload JUnit XML
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-firefox
+          path: reports/junit-firefox.xml
+          retention-days: 7
+      
+      - name: Upload test logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-logs-firefox
+          path: test_execution.log
+          retention-days: 7
+
+  generate-report:
+    name: Generate Allure Report
+    runs-on: ubuntu-latest
+    needs: [test-chrome, test-firefox]
+    if: always()
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+      
+      - name: Merge Allure results
+        run: |
+          mkdir -p reports/allure-results
+          find artifacts/ -name "allure-results-*" -type d -exec cp -r {}/* reports/allure-results/ \;
+      
+      - name: Generate Allure Report
+        uses: simple-elf/allure-report-action@master
+        if: always()
+        with:
+          allure_results: reports/allure-results
+          allure_history: allure-history
+          keep_reports: 20
+      
+      - name: Deploy report to GitHub Pages
+        if: always()
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: allure-history
+      
+      - name: Add Report Link to Summary
+        if: always()
+        run: |
+          echo "## Allure Report Published" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "View the detailed report at: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/" >> $GITHUB_STEP_SUMMARY
