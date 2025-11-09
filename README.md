@@ -95,7 +95,7 @@ selenium-python-use-insider/
 
 Tests run automatically on push to `main`. Manual trigger available in GitHub Actions.
 
-Reports deployed to: `https://<your-username>.github.io/<repo-name>/`
+Reports deployed to: `https://vbonite-sm.github.io/selenium-python-use-insider/`
 
 ## Configuration
 
