@@ -36,13 +36,11 @@ class Config:
             options = Options()
             if cls.HEADLESS:
                 options.add_argument("--headless=new")
-                options.add_argument("--window-size=1920,1080")   # headless needs explicit size
-            else:
-                options.add_argument("--start-maximized")         # headed only
             options.add_argument("--no-sandbox")
             options.add_argument("--disable-dev-shm-usage")
             options.add_argument("--disable-gpu")
-            options.add_argument("--window-size=1920,1080")
+            options.add_argument("--window-size=1920,1080")  # Explicit size
+            options.add_argument("--start-maximized")        # Start maximized
             return options
         
         elif cls.BROWSER == Browser.FIREFOX:
@@ -50,7 +48,7 @@ class Config:
             options = Options()
             if cls.HEADLESS:
                 options.add_argument("--headless")
-            options.add_argument("--width=1920")
+            options.add_argument("--width=1920")   # Explicit size
             options.add_argument("--height=1080")
             return options
         

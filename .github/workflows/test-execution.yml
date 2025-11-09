@@ -29,7 +29,10 @@ jobs:
 
       - name: Start virtual display (1920x1080)
         run: |
-          sudo Xvfb :99 -screen 0 1920x1080x24 >/dev/null 2>&1 &
+          sudo apt-get update
+          sudo apt-get install -y xvfb
+          sudo Xvfb :99 -screen 0 1920x1080x24 > /dev/null 2>&1 &
+          sleep 3
           echo "DISPLAY=:99" >> $GITHUB_ENV
 
       - name: Set up Python
@@ -49,6 +52,8 @@ jobs:
           mkdir -p reports/allure-results
       
       - name: Run tests on Chrome
+        env:
+          DISPLAY: :99
         run: |
           pytest tests/test_insider_careers.py \
             --browser=chrome \
@@ -67,7 +72,11 @@ jobs:
         run: |
           echo "# Chrome Test Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          cat reports/test-summary-chrome.md >> $GITHUB_STEP_SUMMARY
+          if [ -f reports/test-summary-chrome.md ]; then
+            cat reports/test-summary-chrome.md >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Test summary not generated" >> $GITHUB_STEP_SUMMARY
+          fi
       
       - name: Publish Test Results
         uses: EnricoMi/publish-unit-test-result-action@v2
@@ -116,6 +125,7 @@ jobs:
           name: test-logs-chrome
           path: test_execution.log
           retention-days: 7
+          if-no-files-found: ignore
 
   test-firefox:
     name: Run Tests on Firefox
@@ -128,7 +138,10 @@ jobs:
 
       - name: Start virtual display (1920x1080)
         run: |
-          sudo Xvfb :99 -screen 0 1920x1080x24 >/dev/null 2>&1 &
+          sudo apt-get update
+          sudo apt-get install -y xvfb
+          sudo Xvfb :99 -screen 0 1920x1080x24 > /dev/null 2>&1 &
+          sleep 3
           echo "DISPLAY=:99" >> $GITHUB_ENV
       
       - name: Set up Python
@@ -148,6 +161,8 @@ jobs:
           mkdir -p reports/allure-results
       
       - name: Run tests on Firefox
+        env:
+          DISPLAY: :99
         run: |
           pytest tests/test_insider_careers.py \
             --browser=firefox \
@@ -166,7 +181,11 @@ jobs:
         run: |
           echo "# Firefox Test Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          cat reports/test-summary-firefox.md >> $GITHUB_STEP_SUMMARY
+          if [ -f reports/test-summary-firefox.md ]; then
+            cat reports/test-summary-firefox.md >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Test summary not generated" >> $GITHUB_STEP_SUMMARY
+          fi
       
       - name: Publish Test Results
         uses: EnricoMi/publish-unit-test-result-action@v2
@@ -215,11 +234,12 @@ jobs:
           name: test-logs-firefox
           path: test_execution.log
           retention-days: 7
+          if-no-files-found: ignore
 
   generate-report:
     name: Generate Allure Report
     runs-on: ubuntu-latest
-    needs: [test-chrome, test-firefox]
+    needs: [test-chrome]
     if: always()
     
     steps:
@@ -230,22 +250,34 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: artifacts/
+        continue-on-error: true
       
       - name: Merge Allure results
         run: |
           mkdir -p reports/allure-results
-          find artifacts/ -name "allure-results-*" -type d -exec cp -r {}/* reports/allure-results/ \;
+          if [ -d "artifacts/" ]; then
+            find artifacts/ -name "allure-results-*" -type d -exec cp -r {}/* reports/allure-results/ \; 2>/dev/null || true
+          fi
+      
+      - name: Check if Allure results exist
+        id: check-results
+        run: |
+          if [ -d "reports/allure-results" ] && [ "$(ls -A reports/allure-results)" ]; then
+            echo "has_results=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_results=false" >> $GITHUB_OUTPUT
+          fi
       
       - name: Generate Allure Report
+        if: steps.check-results.outputs.has_results == 'true'
         uses: simple-elf/allure-report-action@master
-        if: always()
         with:
           allure_results: reports/allure-results
           allure_history: allure-history
           keep_reports: 20
       
       - name: Deploy report to GitHub Pages
-        if: always()
+        if: steps.check-results.outputs.has_results == 'true'
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -253,8 +285,15 @@ jobs:
           publish_dir: allure-history
       
       - name: Add Report Link to Summary
-        if: always()
+        if: steps.check-results.outputs.has_results == 'true'
         run: |
           echo "## Allure Report Published" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "View the detailed report at: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/" >> $GITHUB_STEP_SUMMARY
+      
+      - name: No Results Message
+        if: steps.check-results.outputs.has_results == 'false'
+        run: |
+          echo "## No Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "No Allure results were generated to create a report." >> $GITHUB_STEP_SUMMARY
